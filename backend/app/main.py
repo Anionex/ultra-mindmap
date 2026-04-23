@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
 from .utils.errors import AppError, app_error_handler
-from .routers import files, mindmap
+from .routers import files, mindmap, bench
 
 Base.metadata.create_all(bind=engine)
 
@@ -20,3 +20,4 @@ app.add_middleware(
 app.add_exception_handler(AppError, app_error_handler)
 app.include_router(files.router, prefix="/api/files", tags=["files"])
 app.include_router(mindmap.router, prefix="/api/mindmap", tags=["mindmap"])
+app.include_router(bench.router, prefix="/api/bench", tags=["bench"])

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Brain, Loader2 } from 'lucide-react';
 import FileLibrary from './components/FileLibrary';
 import EnginePanel from './components/EnginePanel';
+import BenchPanel from './components/BenchPanel';
 import MindMapView from './components/MindMapView';
 import TipCard from './components/TipCard';
 import * as api from './services/api';
@@ -17,6 +18,7 @@ export default function App() {
   const [mindmapData, setMindmapData] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [tips, setTips] = useState([]);
+  const [activeTab, setActiveTab] = useState('generate');
 
   const addTip = useCallback((type, message) => {
     const id = ++tipId;
@@ -107,17 +109,52 @@ export default function App() {
           />
 
           {engines.length > 0 && (
-            <EnginePanel
-              engines={engines}
-              selectedEngine={selectedEngine}
-              onEngineChange={setSelectedEngine}
-              params={params}
-              onParamsChange={setParams}
-            />
+            <>
+              {/* Tab Bar */}
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setActiveTab('generate')}
+                  className={`px-4 py-2 text-xs font-medium transition-colors ${
+                    activeTab === 'generate'
+                      ? 'text-gray-900 border-b-2 border-gray-900'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  生成
+                </button>
+                <button
+                  onClick={() => setActiveTab('bench')}
+                  className={`px-4 py-2 text-xs font-medium transition-colors ${
+                    activeTab === 'bench'
+                      ? 'text-gray-900 border-b-2 border-gray-900'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  对比
+                </button>
+              </div>
+
+              {activeTab === 'generate' ? (
+                <EnginePanel
+                  engines={engines}
+                  selectedEngine={selectedEngine}
+                  onEngineChange={setSelectedEngine}
+                  params={params}
+                  onParamsChange={setParams}
+                />
+              ) : (
+                <BenchPanel
+                  engines={engines}
+                  selectedIds={selectedIds}
+                  addTip={addTip}
+                />
+              )}
+            </>
           )}
         </div>
 
         {/* Generate Button */}
+        {activeTab === 'generate' && (
         <div className="px-5 py-4 border-t border-gray-100">
           <button
             onClick={handleGenerate}
@@ -139,6 +176,7 @@ export default function App() {
             )}
           </button>
         </div>
+        )}
       </div>
 
       {/* Right Panel - Mind Map */}

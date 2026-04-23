@@ -32,6 +32,18 @@ export async function generateMindmap(fileIds, engine, params) {
   return data;
 }
 
+export async function runBench(fileIds, engineA, paramsA, engineB, paramsB, judgeModel) {
+  const { data } = await api.post('/bench/run', {
+    file_ids: fileIds,
+    engine_a: engineA,
+    params_a: paramsA,
+    engine_b: engineB,
+    params_b: paramsB,
+    judge_model: judgeModel,
+  });
+  return data;
+}
+
 export function extractErrorMessage(err) {
   if (err.response?.data?.error) {
     const { message, detail } = err.response.data.error;
