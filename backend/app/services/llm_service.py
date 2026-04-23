@@ -5,6 +5,12 @@ from openai import OpenAI
 
 from ..utils.errors import AppError
 
+SYSTEM_PROMPT = """\
+你是一个思维导图生成器。根据用户提供的文本内容，生成结构化的思维导图。
+输出必须是 JSON 格式，结构为：{"name": "根节点", "children": [{"name": "子节点", "children": [...]}]}。
+每个节点只有 name 和 children 两个字段。name 是简短的标签文本，children 是子节点数组。
+确保思维导图层次清晰、要点完整、用词简练。"""
+
 _client = None
 
 
@@ -31,15 +37,7 @@ def generate_mindmap_json(prompt: str, model: str = "gpt-4o-mini", temperature: 
             temperature=temperature,
             response_format={"type": "json_object"},
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "你是一个思维导图生成器。根据用户提供的文本内容，生成结构化的思维导图。"
-                        "输出必须是 JSON 格式，结构为：{\"name\": \"根节点\", \"children\": [{\"name\": \"子节点\", \"children\": [...]}]}。"
-                        "每个节点只有 name 和 children 两个字段。name 是简短的标签文本，children 是子节点数组。"
-                        "确保思维导图层次清晰、要点完整、用词简练。"
-                    ),
-                },
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
         )
