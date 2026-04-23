@@ -4,6 +4,7 @@ sqlalchemy
 python-multipart
 openai
 langchain-text-splitters
+tiktoken
 python-docx
 PyPDF2
 pytest

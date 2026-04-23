@@ -49,3 +49,20 @@ def generate_mindmap_json(prompt: str, model: str = "gpt-4o-mini", temperature: 
         raise AppError(code="LLM_API_ERROR", message="LLM 返回的内容不是有效的 JSON", detail=str(e))
     except Exception as e:
         raise AppError(code="LLM_API_ERROR", message="调用 LLM 失败", detail=str(e))
+
+
+def generate_mindmap_text(prompt: str, model: str = "gpt-4o-mini", temperature: float = 0.3) -> str:
+    try:
+        client = _get_client()
+        response = client.chat.completions.create(
+            model=model,
+            temperature=temperature,
+            messages=[
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response.choices[0].message.content or ""
+    except AppError:
+        raise
+    except Exception as e:
+        raise AppError(code="LLM_API_ERROR", message="调用 LLM 失败", detail=str(e))
