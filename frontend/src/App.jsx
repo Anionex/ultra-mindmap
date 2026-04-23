@@ -88,9 +88,7 @@ export default function App() {
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-              <Brain size={18} className="text-white" />
-            </div>
+            <Brain size={22} className="text-gray-900" />
             <div>
               <h1 className="text-base font-semibold text-gray-900">Ultra MindMap</h1>
               <p className="text-xs text-gray-400">文本 → 思维导图</p>
