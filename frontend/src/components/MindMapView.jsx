@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Markmap } from 'markmap-view';
+import { Network } from 'lucide-react';
 import gsap from 'gsap';
 
 function toMarkmapData(node) {
@@ -38,13 +39,7 @@ export default function MindMapView({ data }) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-400">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 9V4M12 15v5M15 12h5M9 12H4" />
-              <path d="M5.5 5.5l2.5 2.5M16 16l2.5 2.5M5.5 18.5l2.5-2.5M16 8l2.5-2.5" />
-            </svg>
-          </div>
+          <Network size={36} className="mx-auto mb-4 text-gray-300" />
           <p className="text-sm">选择文件并生成思维导图</p>
         </div>
       </div>
