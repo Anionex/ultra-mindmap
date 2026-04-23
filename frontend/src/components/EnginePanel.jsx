@@ -20,25 +20,21 @@ function ParamField({ name, schema, value, onChange }) {
   }
 
   if (schema.type === 'number' || schema.type === 'integer') {
-    const min = schema.minimum ?? 0;
-    const max = schema.maximum ?? 100;
     const step = schema.step ?? (schema.type === 'integer' ? 1 : 0.1);
-    const current = value ?? schema.default ?? min;
+    const current = value ?? schema.default ?? 0;
 
     return (
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-gray-600">{schema.title || name}</label>
         <input
           type="number"
-          min={min}
-          max={max}
           step={step}
           value={current}
           onChange={(e) => {
             const raw = e.target.value;
             if (raw === '') return;
             const v = schema.type === 'integer' ? parseInt(raw) : parseFloat(raw);
-            if (!isNaN(v) && v >= min && v <= max) onChange(v);
+            if (!isNaN(v)) onChange(v);
           }}
           className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 font-mono"
         />
