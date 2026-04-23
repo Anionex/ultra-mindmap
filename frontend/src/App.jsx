@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Brain, Loader2 } from 'lucide-react';
 import FileLibrary from './components/FileLibrary';
 import EnginePanel from './components/EnginePanel';
@@ -19,6 +19,19 @@ export default function App() {
   const [generating, setGenerating] = useState(false);
   const [tips, setTips] = useState([]);
   const [activeTab, setActiveTab] = useState('generate');
+  const [sidebarWidth, setSidebarWidth] = useState(360);
+  const dragging = useRef(false);
+
+  useEffect(() => {
+    const onMouseMove = (e) => {
+      if (!dragging.current) return;
+      setSidebarWidth(Math.min(Math.max(e.clientX, 280), 800));
+    };
+    const onMouseUp = () => { dragging.current = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); };
+  }, []);
 
   const addTip = useCallback((type, message) => {
     const id = ++tipId;
@@ -86,7 +99,7 @@ export default function App() {
   return (
     <div className="h-screen flex bg-white">
       {/* Left Panel */}
-      <div className="w-[360px] flex-shrink-0 border-r border-gray-200 flex flex-col">
+      <div style={{ width: sidebarWidth }} className="flex-shrink-0 border-r border-gray-200 flex flex-col relative">
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
@@ -177,6 +190,12 @@ export default function App() {
           </button>
         </div>
         )}
+
+        {/* Resize Handle */}
+        <div
+          onMouseDown={() => { dragging.current = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }}
+          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-gray-300 active:bg-gray-400 transition-colors z-10"
+        />
       </div>
 
       {/* Right Panel - Mind Map */}
