@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+python-multipart
+openai
+langchain-text-splitters
+python-docx
+PyPDF2
+pytest
+httpx
