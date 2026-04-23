@@ -6,8 +6,10 @@ DIRECT_PROMPT = """\
 - 提取关键概念和要点，用简练文字描述
 - 保持逻辑层次清晰
 
-{documents}"""
+{documents}
+"""
 
 DOC_SECTION = """\
 === 文档: {title} ===
-{content}"""
+{content}
+"""

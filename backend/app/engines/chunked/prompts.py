@@ -6,4 +6,5 @@ CHUNK_PROMPT = """\
 - 提取关键概念和要点
 - 输出一个根节点，children 中包含该片段的主要主题
 
-{chunk}"""
+{chunk}
+"""
