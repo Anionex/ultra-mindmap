@@ -27,26 +27,21 @@ function ParamField({ name, schema, value, onChange }) {
 
     return (
       <div className="flex flex-col gap-1.5">
-        <div className="flex justify-between items-center">
-          <label className="text-xs font-medium text-gray-600">{schema.title || name}</label>
-          <span className="text-xs text-gray-500 font-mono">{current}</span>
-        </div>
+        <label className="text-xs font-medium text-gray-600">{schema.title || name}</label>
         <input
-          type="range"
+          type="number"
           min={min}
           max={max}
           step={step}
           value={current}
           onChange={(e) => {
-            const v = schema.type === 'integer' ? parseInt(e.target.value) : parseFloat(e.target.value);
-            onChange(v);
+            const raw = e.target.value;
+            if (raw === '') return;
+            const v = schema.type === 'integer' ? parseInt(raw) : parseFloat(raw);
+            if (!isNaN(v) && v >= min && v <= max) onChange(v);
           }}
-          className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer"
+          className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 font-mono"
         />
-        <div className="flex justify-between text-xs text-gray-400">
-          <span>{min}</span>
-          <span>{max}</span>
-        </div>
       </div>
     );
   }
