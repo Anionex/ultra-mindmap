@@ -1,8 +1,15 @@
 __pycache__/
 *.pyc
+*.pyo
 *.db
+
 backend/uploads/*
 !backend/uploads/.gitkeep
+
 .env
+.env.*
+!.env.example
+
 node_modules/
 dist/
+.vite/
