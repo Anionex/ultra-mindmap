@@ -18,7 +18,8 @@ def _get_client() -> OpenAI:
                 message="未配置 OpenAI API Key",
                 detail="请设置环境变量 OPENAI_API_KEY",
             )
-        _client = OpenAI(api_key=api_key)
+        base_url = os.environ.get("OPENAI_API_BASE") or None
+        _client = OpenAI(api_key=api_key, base_url=base_url)
     return _client
 
 
