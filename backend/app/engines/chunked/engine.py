@@ -1,7 +1,8 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from .base import BaseEngine, Document, register_engine
-from ..services.llm_service import generate_mindmap_json
+from ..base import BaseEngine, Document, register_engine
+from ...services.llm_service import generate_mindmap_json
+from .prompts import CHUNK_PROMPT
 
 
 class ChunkedEngine(BaseEngine):
@@ -70,14 +71,12 @@ class ChunkedEngine(BaseEngine):
             chunks = splitter.split_text(doc.content)
             chunk_trees = []
             for i, chunk in enumerate(chunks):
-                prompt = (
-                    f"请根据以下文本片段生成思维导图子树。\n"
-                    f"要求：\n"
-                    f"- 这是文档「{doc.title}」的第 {i + 1}/{len(chunks)} 个片段\n"
-                    f"- 最大层级深度为 {max_depth} 层\n"
-                    f"- 提取关键概念和要点\n"
-                    f"- 输出一个根节点，children 中包含该片段的主要主题\n\n"
-                    f"{chunk}"
+                prompt = CHUNK_PROMPT.format(
+                    doc_title=doc.title,
+                    chunk_index=i + 1,
+                    total_chunks=len(chunks),
+                    max_depth=max_depth,
+                    chunk=chunk,
                 )
                 tree = generate_mindmap_json(prompt, model=model, temperature=temperature)
                 chunk_trees.append(tree)
