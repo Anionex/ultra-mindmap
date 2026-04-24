@@ -55,9 +55,8 @@ frontend/src/
 ```bash
 # 后端
 cd backend
-export OPENAI_API_KEY=xxx
-export OPENAI_API_BASE=xxx  # 可选
-python3 -m uvicorn app.main:app --reload --port 8000
+uv sync
+uv run uvicorn app.main:app --reload --port 8000
 
 # 前端
 cd frontend

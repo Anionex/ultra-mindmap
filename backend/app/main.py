@@ -1,9 +1,12 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
 from .utils.errors import AppError, app_error_handler
-from .routers import files, mindmap, bench
+from .routers import files, mindmap, bench, settings
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,3 +24,4 @@ app.add_exception_handler(AppError, app_error_handler)
 app.include_router(files.router, prefix="/api/files", tags=["files"])
 app.include_router(mindmap.router, prefix="/api/mindmap", tags=["mindmap"])
 app.include_router(bench.router, prefix="/api/bench", tags=["bench"])
+app.include_router(settings.router, prefix="/api/settings", tags=["settings"])

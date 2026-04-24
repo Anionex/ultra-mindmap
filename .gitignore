@@ -3,8 +3,8 @@ __pycache__/
 *.pyo
 *.db
 
-backend/uploads/*
-!backend/uploads/.gitkeep
+backend/app/uploads/
+backend/.venv/
 
 .env
 .env.*
