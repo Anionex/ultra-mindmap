@@ -84,7 +84,7 @@ A module-level registry that auto-discovers engine subclasses. The `/api/engines
 - Concatenates all documents with clear separators (document title as section header).
 - Sends full text to OpenAI with a structured prompt requesting a JSON mind map tree.
 - Each document becomes a top-level branch under the root.
-- **Parameters**: model (gpt-4o / gpt-4o-mini), temperature (0.0–1.0), max_depth (2–6).
+- **Parameters**: model (gpt-4o / gemini-3-flash-preview), temperature (0.0–1.0), max_depth (2–6).
 
 ### ChunkedEngine
 

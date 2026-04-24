@@ -52,22 +52,17 @@ class MapReduceEngine(BaseEngine):
                 "model": {
                     "type": "string",
                     "title": "模型",
-                    "enum": ["gpt-4o", "gpt-4o-mini"],
-                    "default": "gpt-4o-mini",
+                    "default": "gemini-3-flash-preview",
                 },
                 "temperature": {
                     "type": "number",
                     "title": "温度",
-                    "minimum": 0.0,
-                    "maximum": 1.0,
                     "default": 0.3,
                     "step": 0.1,
                 },
                 "max_depth": {
                     "type": "integer",
                     "title": "最大深度",
-                    "minimum": 2,
-                    "maximum": 6,
                     "default": 4,
                 },
                 "language": {
@@ -86,7 +81,7 @@ class MapReduceEngine(BaseEngine):
         }
 
     def generate(self, documents: list[Document], params: dict) -> dict:
-        model = params.get("model", "gpt-4o-mini")
+        model = params.get("model", "gemini-3-flash-preview")
         temperature = params.get("temperature", 0.3)
         max_depth = params.get("max_depth", 4)
         language = params.get("language", "zh")

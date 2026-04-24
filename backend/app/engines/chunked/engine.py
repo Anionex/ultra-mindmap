@@ -17,45 +17,36 @@ class ChunkedEngine(BaseEngine):
                 "model": {
                     "type": "string",
                     "title": "模型",
-                    "enum": ["gpt-4o", "gpt-4o-mini"],
-                    "default": "gpt-4o-mini",
+                    "default": "gemini-3-flash-preview",
                 },
                 "temperature": {
                     "type": "number",
                     "title": "温度",
-                    "minimum": 0.0,
-                    "maximum": 1.0,
                     "default": 0.3,
                     "step": 0.1,
                 },
                 "chunk_size": {
                     "type": "integer",
                     "title": "分块大小",
-                    "minimum": 500,
-                    "maximum": 4000,
                     "default": 1500,
                     "step": 100,
                 },
                 "chunk_overlap": {
                     "type": "integer",
                     "title": "分块重叠",
-                    "minimum": 0,
-                    "maximum": 500,
                     "default": 200,
                     "step": 50,
                 },
                 "max_depth": {
                     "type": "integer",
                     "title": "最大深度",
-                    "minimum": 2,
-                    "maximum": 6,
                     "default": 4,
                 },
             },
         }
 
     def generate(self, documents: list[Document], params: dict) -> dict:
-        model = params.get("model", "gpt-4o-mini")
+        model = params.get("model", "gemini-3-flash-preview")
         temperature = params.get("temperature", 0.3)
         chunk_size = params.get("chunk_size", 1500)
         chunk_overlap = params.get("chunk_overlap", 200)

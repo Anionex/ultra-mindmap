@@ -33,6 +33,19 @@ function CompactParams({ schema, params, onChange }) {
             </div>
           );
         }
+        if (prop.type === 'string' && !prop.enum) {
+          return (
+            <div key={key} className="flex items-center gap-1">
+              <span className="text-[10px] text-gray-400">{prop.title || key}</span>
+              <input
+                type="text"
+                value={params[key] ?? prop.default ?? ''}
+                onChange={(e) => onChange({ ...params, [key]: e.target.value })}
+                className="w-28 px-1.5 py-0.5 text-[11px] bg-white border border-gray-200 rounded font-mono"
+              />
+            </div>
+          );
+        }
         if (prop.type === 'number' || prop.type === 'integer') {
           return (
             <div key={key} className="flex items-center gap-1">
@@ -45,7 +58,7 @@ function CompactParams({ schema, params, onChange }) {
                   const v = prop.type === 'integer' ? parseInt(e.target.value) : parseFloat(e.target.value);
                   if (!isNaN(v)) onChange({ ...params, [key]: v });
                 }}
-                className="w-16 px-1.5 py-0.5 text-[11px] bg-white border border-gray-200 rounded font-mono"
+                className="w-20 px-1.5 py-0.5 text-[11px] bg-white border border-gray-200 rounded font-mono"
               />
             </div>
           );
@@ -306,15 +319,13 @@ export default function BenchPanel({ engines, selectedIds, addTip }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="text-[10px] text-gray-400 uppercase tracking-wide">Judge</label>
-        <select
+        <label className="text-[10px] text-gray-400 uppercase tracking-wide shrink-0">Judge</label>
+        <input
+          type="text"
           value={judgeModel}
           onChange={(e) => setJudgeModel(e.target.value)}
-          className="flex-1 px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg"
-        >
-          <option value="gpt-4o">gpt-4o</option>
-          <option value="gpt-4o-mini">gpt-4o-mini</option>
-        </select>
+          className="flex-1 px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-gray-300"
+        />
       </div>
 
       <button

@@ -15,7 +15,7 @@ _MODEL_CONTEXT_WINDOWS = {
     "gpt-4": 8192,
     "gpt-4-turbo": 128000,
     "gpt-4o": 128000,
-    "gpt-4o-mini": 128000,
+    "gemini-3-flash-preview": 128000,
     "gpt-4.1": 1048576,
     "gpt-4.1-mini": 1048576,
     "gpt-4.1-nano": 1048576,
