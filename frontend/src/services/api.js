@@ -52,3 +52,13 @@ export function extractErrorMessage(err) {
   if (err.message) return err.message;
   return '发生未知错误';
 }
+
+export async function getSettings() {
+  const { data } = await api.get('/settings');
+  return data;
+}
+
+export async function updateSettings(settings) {
+  const { data } = await api.put('/settings', settings);
+  return data;
+}

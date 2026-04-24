@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Brain, Loader2 } from 'lucide-react';
+import { Brain, Loader2, Settings } from 'lucide-react';
 import FileLibrary from './components/FileLibrary';
 import EnginePanel from './components/EnginePanel';
 import BenchPanel from './components/BenchPanel';
+import SettingsModal, { syncSettingsOnBoot } from './components/SettingsPanel';
 import MindMapView from './components/MindMapView';
 import TipCard from './components/TipCard';
 import * as api from './services/api';
@@ -20,6 +21,7 @@ export default function App() {
   const [tips, setTips] = useState([]);
   const [activeTab, setActiveTab] = useState('generate');
   const [sidebarWidth, setSidebarWidth] = useState(360);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const dragging = useRef(false);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    syncSettingsOnBoot();
     api.listFiles().then(setFiles).catch((e) => addTip('error', api.extractErrorMessage(e)));
     api.listEngines().then((data) => {
       setEngines(data);
@@ -102,12 +105,20 @@ export default function App() {
       <div style={{ width: sidebarWidth }} className="flex-shrink-0 border-r border-gray-200 flex flex-col relative">
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2.5">
-            <Brain size={22} className="text-gray-900" />
-            <div>
-              <h1 className="text-base font-semibold text-gray-900">Ultra MindMap</h1>
-              <p className="text-xs text-gray-400">文本 → 思维导图</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Brain size={22} className="text-gray-900" />
+              <div>
+                <h1 className="text-base font-semibold text-gray-900">Ultra MindMap</h1>
+                <p className="text-xs text-gray-400">文本 → 思维导图</p>
+              </div>
             </div>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <Settings size={16} />
+            </button>
           </div>
         </div>
 
@@ -209,6 +220,8 @@ export default function App() {
           ))}
         </div>
       </div>
+
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} addTip={addTip} />
     </div>
   );
 }
