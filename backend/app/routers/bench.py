@@ -3,9 +3,12 @@ Bench 路由 — 对比不同引擎的思维导图生成质量。
 使用 LLM-as-judge 进行盲评，输出 5 维度评分。
 """
 import json
+import logging
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -146,9 +149,12 @@ def run_bench(req: BenchRequest, db: Session = Depends(get_db)):
         content = parse_file(record.storage_path, record.file_type)
         documents.append({"id": file_id, "filename": record.filename, "content": content})
 
+    logger.info("Bench start: engine_a=%s, engine_b=%s, files=%d", req.engine_a, req.engine_b, len(documents))
+
     results = []
     for doc_info in documents:
         doc = Document(title=doc_info["filename"], content=doc_info["content"])
+        logger.info("Processing file: %s (%d chars)", doc_info["filename"], len(doc_info["content"]))
         t0 = time.time()
 
         with ThreadPoolExecutor(max_workers=2) as executor:
@@ -157,6 +163,7 @@ def run_bench(req: BenchRequest, db: Session = Depends(get_db)):
             result_a = future_a.result()
             result_b = future_b.result()
 
+        logger.info("Both engines finished for %s", doc_info["filename"])
         md_a = _json_tree_to_markdown(result_a)
         md_b = _json_tree_to_markdown(result_b)
 
@@ -171,6 +178,7 @@ def run_bench(req: BenchRequest, db: Session = Depends(get_db)):
         prompt = _build_judge_prompt(doc_info["content"], prompt_md_a, prompt_md_b)
         raw_response = generate_mindmap_text(prompt, model=req.judge_model, temperature=0.1)
         parsed = _parse_judge_response(raw_response)
+        logger.info("Judge response parsed=%s for %s", parsed is not None, doc_info["filename"])
 
         dt = time.time() - t0
 
@@ -182,6 +190,7 @@ def run_bench(req: BenchRequest, db: Session = Depends(get_db)):
                 score_a_raw = parsed["B"]
                 score_b_raw = parsed["A"]
         else:
+            logger.warning("Judge failed for %s, using default scores. raw=%s", doc_info["filename"], raw_response[:200] if raw_response else None)
             score_a_raw = {d: 3 for d in DIMENSIONS}
             score_a_raw["rationale"] = "Judge failed to produce valid scores"
             score_b_raw = {d: 3 for d in DIMENSIONS}

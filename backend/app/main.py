@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,6 +10,8 @@ from .utils.errors import AppError, app_error_handler
 from .routers import files, mindmap, bench, settings
 
 Base.metadata.create_all(bind=engine)
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Ultra MindMap")
 
