@@ -1,7 +1,8 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from ..base import BaseEngine, Document, register_engine
-from ...services.llm_service import generate_mindmap_json
+from ...services.llm_service import generate_mindmap_markdown
+from ...services.mindmap_format import build_mindmap_response, extract_tree
 from .prompts import CHUNK_PROMPT
 
 
@@ -69,7 +70,8 @@ class ChunkedEngine(BaseEngine):
                     max_depth=max_depth,
                     chunk=chunk,
                 )
-                tree = generate_mindmap_json(prompt, model=model, temperature=temperature)
+                payload = generate_mindmap_markdown(prompt, model=model, temperature=temperature)
+                tree = extract_tree(payload, fallback_root=doc.title)
                 chunk_trees.append(tree)
 
             merged_children = []
@@ -81,7 +83,7 @@ class ChunkedEngine(BaseEngine):
 
             root_children.append({"name": doc.title, "children": merged_children})
 
-        return {"name": "思维导图", "children": root_children}
+        return build_mindmap_response(tree={"name": "思维导图", "children": root_children})
 
 
 register_engine(ChunkedEngine())

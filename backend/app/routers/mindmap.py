@@ -7,6 +7,7 @@ from ..schemas import GenerateRequest, EngineInfo
 from ..engines import base as engine_base  # engines/__init__.py triggers registration
 from ..engines.base import Document
 from ..services.file_service import parse_file
+from ..services.mindmap_format import normalize_mindmap_payload
 from ..utils.errors import AppError
 
 router = APIRouter()
@@ -41,4 +42,4 @@ def generate_mindmap(req: GenerateRequest, db: Session = Depends(get_db)):
         documents.append(Document(title=record.filename, content=content))
 
     result = engine.generate(documents, req.params)
-    return result
+    return normalize_mindmap_payload(result)

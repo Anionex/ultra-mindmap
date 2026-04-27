@@ -1,8 +1,7 @@
-import json
-
 from ..base import BaseEngine, Document, register_engine
-from ...services.llm_service import generate_mindmap_json
-from .prompts import MERGE_PROMPT, SINGLE_DOC_PROMPT, TREE_SECTION
+from ...services.llm_service import generate_mindmap_markdown
+from ...services.mindmap_format import normalize_mindmap_payload
+from .prompts import MERGE_PROMPT, MINDMAP_SECTION, SINGLE_DOC_PROMPT
 
 
 class DocMergeEngine(BaseEngine):
@@ -33,40 +32,41 @@ class DocMergeEngine(BaseEngine):
             },
         }
 
-    def _generate_single_doc_tree(self, document: Document, model: str, temperature: float, max_depth: int) -> dict:
+    def _generate_single_doc_mindmap(self, document: Document, model: str, temperature: float, max_depth: int) -> str:
         prompt = SINGLE_DOC_PROMPT.format(
             title=document.title,
             content=document.content,
             max_depth=max_depth,
         )
-        return generate_mindmap_json(prompt, model=model, temperature=temperature)
+        return generate_mindmap_markdown(prompt, model=model, temperature=temperature).strip()
 
-    def _merge_doc_trees(self, trees: list[tuple[str, dict]], model: str, temperature: float, max_depth: int) -> dict:
-        if len(trees) == 1:
-            return trees[0][1]
+    def _merge_doc_mindmaps(self, mindmaps: list[tuple[str, str]], model: str, temperature: float, max_depth: int) -> dict:
+        if len(mindmaps) == 1:
+            return normalize_mindmap_payload(mindmaps[0][1])
 
-        tree_sections = "\n\n".join(
-            TREE_SECTION.format(
+        mindmap_sections = "\n\n".join(
+            MINDMAP_SECTION.format(
                 title=title,
-                tree_json=json.dumps(tree, ensure_ascii=False),
+                mindmap_markdown=mindmap_markdown,
             )
-            for title, tree in trees
+            for title, mindmap_markdown in mindmaps
         )
         prompt = MERGE_PROMPT.format(
             max_depth=max_depth,
-            document_trees=tree_sections,
+            document_mindmaps=mindmap_sections,
         )
-        return generate_mindmap_json(prompt, model=model, temperature=temperature)
+        markdown = generate_mindmap_markdown(prompt, model=model, temperature=temperature)
+        return normalize_mindmap_payload(markdown)
 
     def generate(self, documents: list[Document], params: dict) -> dict:
         model = params.get("model", "gemini-3-flash-preview")
         temperature = params.get("temperature", 0.3)
         max_depth = params.get("max_depth", 10)
 
-        per_doc_trees = [
+        per_doc_mindmaps = [
             (
                 document.title,
-                self._generate_single_doc_tree(
+                self._generate_single_doc_mindmap(
                     document=document,
                     model=model,
                     temperature=temperature,
@@ -76,8 +76,8 @@ class DocMergeEngine(BaseEngine):
             for document in documents
         ]
 
-        return self._merge_doc_trees(
-            trees=per_doc_trees,
+        return self._merge_doc_mindmaps(
+            mindmaps=per_doc_mindmaps,
             model=model,
             temperature=temperature,
             max_depth=max_depth,

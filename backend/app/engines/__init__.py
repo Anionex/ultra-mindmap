@@ -1,1 +1,1 @@
-from . import direct, chunked, outline, docmerge  # noqa: F401 — trigger engine registration
+from . import direct, direct_origin, chunked, outline, docmerge  # noqa: F401 — trigger engine registration

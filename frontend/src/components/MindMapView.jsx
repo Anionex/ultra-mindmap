@@ -1,14 +1,28 @@
 import { useEffect, useRef } from 'react';
+import { Transformer } from 'markmap-lib';
 import { Markmap } from 'markmap-view';
 import { Network } from 'lucide-react';
 import gsap from 'gsap';
 
-function toMarkmapData(node) {
-  if (!node) return { content: '', children: [] };
-  return {
-    content: node.name || '',
-    children: (node.children || []).map(toMarkmapData),
-  };
+const transformer = new Transformer();
+
+function treeToMarkdown(node, depth = 1) {
+  if (!node) return '';
+  const lines = [];
+  if (node.name) lines.push(`${'#'.repeat(depth)} ${node.name}`);
+  (node.children || []).forEach((child) => {
+    const childMarkdown = treeToMarkdown(child, depth + 1);
+    if (childMarkdown) lines.push(childMarkdown);
+  });
+  return lines.join('\n');
+}
+
+function getMarkdown(data) {
+  if (!data) return '';
+  if (typeof data.markdown === 'string' && data.markdown.trim()) {
+    return data.markdown.trim();
+  }
+  return treeToMarkdown(data).trim();
 }
 
 export default function MindMapView({ data }) {
@@ -19,17 +33,18 @@ export default function MindMapView({ data }) {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const markmapData = toMarkmapData(data);
+    const markdown = getMarkdown(data);
+    const { root } = transformer.transform(markdown);
 
     if (mmRef.current) {
-      mmRef.current.setData(markmapData);
+      mmRef.current.setData(root);
       mmRef.current.fit();
     } else {
       mmRef.current = Markmap.create(svgRef.current, {
         autoFit: true,
         duration: 300,
         paddingX: 16,
-      }, markmapData);
+      }, root);
     }
 
     gsap.fromTo(containerRef.current, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' });

@@ -21,6 +21,7 @@ from ..engines import base as engine_base
 from ..engines.base import Document
 from ..services.file_service import parse_file
 from ..services.llm_service import generate_mindmap_text
+from ..services.mindmap_format import extract_markdown
 from ..utils.errors import AppError
 
 router = APIRouter()
@@ -115,16 +116,6 @@ def _build_judge_prompt(source_text: str, mindmap_a: str, mindmap_b: str) -> str
 请直接输出 JSON："""
 
 
-def _json_tree_to_markdown(node: dict, depth: int = 1) -> str:
-    lines = []
-    name = node.get("name", "")
-    if name:
-        lines.append(f"{'#' * depth} {name}")
-    for child in node.get("children", []):
-        lines.extend(_json_tree_to_markdown(child, depth + 1).split("\n"))
-    return "\n".join(lines)
-
-
 def _parse_judge_response(raw: str) -> dict | None:
     if not raw:
         return None
@@ -203,8 +194,8 @@ def _evaluate_document_group(
         result_a = future_a.result()
         result_b = future_b.result()
 
-    md_a = _json_tree_to_markdown(result_a)
-    md_b = _json_tree_to_markdown(result_b)
+    md_a = extract_markdown(result_a)
+    md_b = extract_markdown(result_b)
 
     rng = random.Random(hash(tuple(file_ids)) & 0xFFFFFFFF)
     if rng.random() < 0.5:

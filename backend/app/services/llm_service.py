@@ -5,11 +5,16 @@ from openai import OpenAI
 
 from ..utils.errors import AppError
 
-SYSTEM_PROMPT = """\
-你是一个思维导图生成器。根据用户提供的文本内容，生成结构化的思维导图。
-输出必须是 JSON 格式，结构为：{"name": "根节点", "children": [{"name": "子节点", "children": [...]}]}。
-每个节点只有 name 和 children 两个字段。name 是简短的标签文本，children 是子节点数组。
-确保思维导图层次清晰、要点完整、用词简练。"""
+MINDMAP_MARKDOWN_SYSTEM_PROMPT = """\
+你是一个思维导图生成器。根据用户提供的文本内容，输出一份用于 markmap 渲染的 Markdown 思维导图。
+
+输出要求：
+- 只输出 Markdown，不要输出 JSON
+- 使用 ATX 标题语法（# / ## / ###）
+- 整份内容必须是一棵思维导图，不要写解释、前言、总结、代码围栏、项目符号或段落
+- 标题文本要简短，突出关键概念、论点和层级关系
+- 思维导图层次清晰、要点完整、用词简练
+"""
 
 _client = None
 _overrides: dict[str, str] = {}
@@ -70,6 +75,24 @@ def generate_mindmap_json(prompt: str, model: str = "gemini-3-flash-preview", te
         raise
     except json.JSONDecodeError as e:
         raise AppError(code="LLM_API_ERROR", message="LLM 返回的内容不是有效的 JSON", detail=str(e))
+    except Exception as e:
+        raise AppError(code="LLM_API_ERROR", message="调用 LLM 失败", detail=str(e))
+
+
+def generate_mindmap_markdown(prompt: str, model: str = "gemini-3-flash-preview", temperature: float = 0.3) -> str:
+    try:
+        client = _get_client()
+        response = client.chat.completions.create(
+            model=model,
+            temperature=temperature,
+            messages=[
+                {"role": "system", "content": MINDMAP_MARKDOWN_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response.choices[0].message.content or ""
+    except AppError:
+        raise
     except Exception as e:
         raise AppError(code="LLM_API_ERROR", message="调用 LLM 失败", detail=str(e))
 

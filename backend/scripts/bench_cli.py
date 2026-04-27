@@ -1,4 +1,5 @@
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 import sys
@@ -54,6 +55,8 @@ def _load_dataset(all_files: bool, file_ids: list[str], filenames: list[str]) ->
 
 
 def _build_tasks(documents: list[dict], group_size: int, sample_count: int | None, seed: int) -> list[list[dict]]:
+    if group_size == 1:
+        return [[doc] for doc in documents]
     if len(documents) == 1:
         return [documents]
     return _choose_document_groups(
@@ -78,6 +81,7 @@ def main() -> int:
     parser.add_argument("--file-id", action="append", default=[])
     parser.add_argument("--filename", action="append", default=[])
     parser.add_argument("--all-files", action="store_true")
+    parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--output", default=None)
     args = parser.parse_args()
 
@@ -101,8 +105,11 @@ def main() -> int:
     engine_a = engine_base.get_engine(args.engine_a)
     engine_b = engine_base.get_engine(args.engine_b)
 
-    results = [
-        _evaluate_document_group(
+    if args.workers < 1:
+        raise ValueError("--workers must be at least 1")
+
+    def run_task(task: list[dict]):
+        return _evaluate_document_group(
             documents=task,
             engine_a=engine_a,
             engine_b=engine_b,
@@ -112,8 +119,12 @@ def main() -> int:
             params_b=params_b,
             judge_model=args.judge_model,
         )
-        for task in tasks
-    ]
+
+    if args.workers == 1:
+        results = [run_task(task) for task in tasks]
+    else:
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            results = list(executor.map(run_task, tasks))
     summary = _build_batch_summary(results, pair_size=args.group_size)
     payload = {
         "config": {
@@ -123,6 +134,7 @@ def main() -> int:
             "group_size": args.group_size,
             "sample_count": args.sample_count,
             "seed": args.seed,
+            "workers": args.workers,
             "dataset_size": len(documents),
             "task_count": len(results),
         },

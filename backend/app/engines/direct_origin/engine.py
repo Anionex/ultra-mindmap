@@ -1,13 +1,13 @@
 from ..base import BaseEngine, Document, register_engine
 from ...services.llm_service import generate_mindmap_markdown
 from ...services.mindmap_format import normalize_mindmap_payload
-from .prompts import DIRECT_PROMPT, DOC_SECTION
+from .prompts import DIRECT_ORIGIN_PROMPT, DOC_SECTION
 
 
-class DirectEngine(BaseEngine):
-    name = "direct"
-    display_name = "直接生成"
-    description = "将所有文档内容一次性发送给 LLM，直接生成完整思维导图。适合中短篇文档。"
+class DirectOriginEngine(BaseEngine):
+    name = "direct_origin"
+    display_name = "直接生成（原始）"
+    description = "将所有文档内容一次性发送给 LLM，使用原始朴素提示词直接生成完整思维导图。适合中短篇文档。"
 
     def get_params_schema(self) -> dict:
         return {
@@ -41,13 +41,9 @@ class DirectEngine(BaseEngine):
             DOC_SECTION.format(title=doc.title, content=doc.content)
             for doc in documents
         )
-        prompt = DIRECT_PROMPT.format(
-            max_depth=max_depth,
-            max_depth_marks="#" * max_depth,
-            documents=doc_text,
-        )
+        prompt = DIRECT_ORIGIN_PROMPT.format(max_depth=max_depth, documents=doc_text)
         result = generate_mindmap_markdown(prompt, model=model, temperature=temperature)
         return normalize_mindmap_payload(result)
 
 
-register_engine(DirectEngine())
+register_engine(DirectOriginEngine())
