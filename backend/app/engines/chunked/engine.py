@@ -40,7 +40,7 @@ class ChunkedEngine(BaseEngine):
                 "max_depth": {
                     "type": "integer",
                     "title": "最大深度",
-                    "default": 4,
+                    "default": 10,
                 },
             },
         }
@@ -50,7 +50,7 @@ class ChunkedEngine(BaseEngine):
         temperature = params.get("temperature", 0.3)
         chunk_size = params.get("chunk_size", 1500)
         chunk_overlap = params.get("chunk_overlap", 200)
-        max_depth = params.get("max_depth", 4)
+        max_depth = params.get("max_depth", 10)
 
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,

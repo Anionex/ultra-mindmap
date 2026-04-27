@@ -28,6 +28,11 @@ backend/
       chunked/            # 分块生成引擎
         engine.py
         prompts.py
+      docmerge/           # 多文档逐篇生成后再合并
+        engine.py
+        prompts.py
+      outline/            # 标题层级树引擎
+        engine.py         # Markdown/编号标题检测 + 层级树构建
     services/
       file_service.py     # 文件解析 (txt/md/pdf/docx)
       llm_service.py      # OpenAI API 封装 (JSON + 文本两种模式)
@@ -76,6 +81,8 @@ npx vite --port 5173
 |------|---------|---------|
 | `direct` | 中短篇文档 | 一次性发送全文给 LLM |
 | `chunked` | 长篇文档 | 分块独立生成后合并 |
+| `docmerge` | 多篇相关文章 | 每篇先单独生成，再按主题合并 |
+| `outline` | 已有清晰标题的文档 | 检测 Markdown/编号标题层级，不调用 LLM |
 
 `llm_service.py` 提供两种 LLM 调用：
 - `generate_mindmap_json()` — JSON 模式 (direct/chunked 引擎)

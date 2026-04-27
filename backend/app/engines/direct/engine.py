@@ -26,7 +26,7 @@ class DirectEngine(BaseEngine):
                 "max_depth": {
                     "type": "integer",
                     "title": "最大深度",
-                    "default": 4,
+                    "default": 10,
                 },
             },
         }
@@ -34,7 +34,7 @@ class DirectEngine(BaseEngine):
     def generate(self, documents: list[Document], params: dict) -> dict:
         model = params.get("model", "gemini-3-flash-preview")
         temperature = params.get("temperature", 0.3)
-        max_depth = params.get("max_depth", 4)
+        max_depth = params.get("max_depth", 10)
 
         doc_text = "\n\n".join(
             DOC_SECTION.format(title=doc.title, content=doc.content)

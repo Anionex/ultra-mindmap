@@ -44,6 +44,22 @@ export async function runBench(fileIds, engineA, paramsA, engineB, paramsB, judg
   return data;
 }
 
+export async function runBenchBatch(fileIds, engineA, paramsA, engineB, paramsB, judgeModel, options = {}) {
+  const { data } = await api.post('/bench/run-batch', {
+    file_ids: fileIds,
+    engine_a: engineA,
+    params_a: paramsA,
+    engine_b: engineB,
+    params_b: paramsB,
+    judge_model: judgeModel,
+    pair_size: options.pairSize ?? 2,
+    sample_count: options.sampleCount ?? null,
+    sampling_mode: options.samplingMode ?? 'all_pairs',
+    seed: options.seed ?? 0,
+  });
+  return data;
+}
+
 export function extractErrorMessage(err) {
   if (err.response?.data?.error) {
     const { message, detail } = err.response.data.error;

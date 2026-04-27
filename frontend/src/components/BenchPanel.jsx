@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { BarChart3, Loader2, ChevronDown } from 'lucide-react';
-import { runBench, extractErrorMessage } from '../services/api';
+import { runBench, runBenchBatch, extractErrorMessage } from '../services/api';
 
 const DIMENSIONS = [
   { key: 'coverage', label: '覆盖度' },
@@ -117,6 +117,7 @@ function ResultCard({ result, engines }) {
   const [expanded, setExpanded] = useState(false);
   const nameA = engines.find((e) => e.name === result.engine_a)?.display_name || result.engine_a;
   const nameB = engines.find((e) => e.name === result.engine_b)?.display_name || result.engine_b;
+  const taskLabel = result.filenames?.length > 0 ? result.filenames.join(' + ') : result.filename;
   const sumA = DIMENSIONS.reduce((s, d) => s + (result.score_a[d.key] || 0), 0);
   const sumB = DIMENSIONS.reduce((s, d) => s + (result.score_b[d.key] || 0), 0);
   const winner = sumA > sumB ? 'A' : sumB > sumA ? 'B' : 'tie';
@@ -127,7 +128,7 @@ function ResultCard({ result, engines }) {
         onClick={() => setExpanded(!expanded)}
         className="w-full px-3 py-2.5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
       >
-        <span className="text-xs font-medium text-gray-900 truncate mr-2">{result.filename}</span>
+        <span className="text-xs font-medium text-gray-900 truncate mr-2">{taskLabel}</span>
         <div className="flex items-center gap-2 shrink-0">
           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
             winner === 'A' ? 'bg-gray-900 text-white' :
@@ -196,7 +197,7 @@ function ResultCard({ result, engines }) {
   );
 }
 
-function AggregateView({ results, engines }) {
+function AggregateView({ results, engines, summary }) {
   if (!results || results.length === 0) return null;
 
   const nameA = engines.find((e) => e.name === results[0].engine_a)?.display_name || results[0].engine_a;
@@ -218,16 +219,38 @@ function AggregateView({ results, engines }) {
     return b > a;
   }).length;
   const ties = results.length - winsA - winsB;
+  const effectiveWinsA = summary?.wins_a ?? winsA;
+  const effectiveWinsB = summary?.wins_b ?? winsB;
+  const effectiveTies = summary?.ties ?? ties;
+  const taskCount = summary?.task_count ?? results.length;
+  const avgTotalA = summary?.avg_total_a ?? (results.reduce((s, r) => s + DIMENSIONS.reduce((t, d) => t + (r.score_a[d.key] || 0), 0), 0) / results.length).toFixed(1);
+  const avgTotalB = summary?.avg_total_b ?? (results.reduce((s, r) => s + DIMENSIONS.reduce((t, d) => t + (r.score_b[d.key] || 0), 0), 0) / results.length).toFixed(1);
+  const pairSize = summary?.pair_size ?? null;
 
   return (
     <div className="bg-gray-50 rounded-lg p-3 space-y-2.5">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">汇总 ({results.length} 文件)</p>
+        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+          汇总 ({taskCount} 任务{pairSize ? ` / 每组 ${pairSize} 篇` : ''})
+        </p>
         <div className="flex gap-1.5 text-[10px]">
-          <span className="px-1.5 py-0.5 bg-gray-900 text-white rounded">{nameA} {winsA}W</span>
-          <span className="px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded">{nameB} {winsB}W</span>
-          {ties > 0 && <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">{ties}T</span>}
+          <span className="px-1.5 py-0.5 bg-gray-900 text-white rounded">{nameA} {effectiveWinsA}W</span>
+          <span className="px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded">{nameB} {effectiveWinsB}W</span>
+          {effectiveTies > 0 && <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">{effectiveTies}T</span>}
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-[11px]">
+        <div className="rounded bg-white px-2 py-1.5 border border-gray-200">
+          <div className="text-gray-400">平均总分</div>
+          <div className="font-mono text-gray-900">{avgTotalA} / {avgTotalB}</div>
+        </div>
+        {summary && (
+          <div className="rounded bg-white px-2 py-1.5 border border-gray-200">
+            <div className="text-gray-400">平均耗时</div>
+            <div className="font-mono text-gray-900">{summary.avg_elapsed_s}s</div>
+          </div>
+        )}
       </div>
 
       {/* Avg scores */}
@@ -273,8 +296,12 @@ export default function BenchPanel({ engines, selectedIds, addTip }) {
     return defaults;
   });
   const [judgeModel, setJudgeModel] = useState('gpt-4o');
+  const [samplingMode, setSamplingMode] = useState('all_pairs');
+  const [sampleCount, setSampleCount] = useState(10);
+  const [seed, setSeed] = useState(0);
   const [running, setRunning] = useState(false);
   const [results, setResults] = useState(null);
+  const [summary, setSummary] = useState(null);
 
   const handleRun = async () => {
     if (selectedIds.size === 0) {
@@ -283,11 +310,32 @@ export default function BenchPanel({ engines, selectedIds, addTip }) {
     }
     setRunning(true);
     try {
-      const data = await runBench(
-        Array.from(selectedIds), engineA, paramsA, engineB, paramsB, judgeModel
-      );
-      setResults(data);
-      addTip('success', `Bench 完成：${data.length} 个文件已评测`);
+      if (selectedIds.size >= 2) {
+        const data = await runBenchBatch(
+          Array.from(selectedIds),
+          engineA,
+          paramsA,
+          engineB,
+          paramsB,
+          judgeModel,
+          {
+            pairSize: 2,
+            samplingMode,
+            sampleCount: samplingMode === 'random' ? sampleCount : null,
+            seed,
+          }
+        );
+        setResults(data.tasks);
+        setSummary(data.summary);
+        addTip('success', `Bench 完成：${data.summary.task_count} 个双文档任务已评测`);
+      } else {
+        const data = await runBench(
+          Array.from(selectedIds), engineA, paramsA, engineB, paramsB, judgeModel
+        );
+        setResults(data);
+        setSummary(null);
+        addTip('success', `Bench 完成：${data.length} 个任务已评测`);
+      }
     } catch (e) {
       addTip('error', extractErrorMessage(e));
     } finally {
@@ -328,6 +376,42 @@ export default function BenchPanel({ engines, selectedIds, addTip }) {
         />
       </div>
 
+      {selectedIds.size >= 2 && (
+        <>
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide shrink-0">Batch</label>
+            <select
+              value={samplingMode}
+              onChange={(e) => setSamplingMode(e.target.value)}
+              className="flex-1 px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300"
+            >
+              <option value="all_pairs">all pairs</option>
+              <option value="random">random pairs</option>
+            </select>
+          </div>
+
+          {samplingMode === 'random' && (
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                min="1"
+                value={sampleCount}
+                onChange={(e) => setSampleCount(parseInt(e.target.value) || 1)}
+                className="px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-gray-300"
+                placeholder="sample count"
+              />
+              <input
+                type="number"
+                value={seed}
+                onChange={(e) => setSeed(parseInt(e.target.value) || 0)}
+                className="px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-gray-300"
+                placeholder="seed"
+              />
+            </div>
+          )}
+        </>
+      )}
+
       <button
         onClick={handleRun}
         disabled={running || selectedIds.size === 0}
@@ -350,7 +434,7 @@ export default function BenchPanel({ engines, selectedIds, addTip }) {
 
       {results && (
         <div className="flex flex-col gap-2">
-          <AggregateView results={results} engines={engines} />
+          <AggregateView results={results} engines={engines} summary={summary} />
           {results.map((r, i) => (
             <ResultCard key={i} result={r} engines={engines} />
           ))}

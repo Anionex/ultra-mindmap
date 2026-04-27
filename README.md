@@ -51,7 +51,8 @@ npx vite --port 5173
 |------|---------|------|
 | `direct` | 中短篇文档 | 一次性发送全文给 LLM |
 | `chunked` | 长篇文档 | 分块独立生成后合并 |
-| `mapreduce` | 复杂长文（论文/综述） | Pre-Plan → Map(并发) → Collapse → Reduce |
+| `docmerge` | 多篇相关文章 | 每篇先单独生成，再把多篇导图合并 |
+| `outline` | 已有清晰标题的文档 | 检测 Markdown/编号标题层级，直接生成层级树 |
 
 ## API
 
@@ -75,7 +76,7 @@ POST   /api/mindmap/generate  生成思维导图
 ```json
 {
   "file_ids": ["xxx"],
-  "engine": "direct",
+  "engine": "outline",
   "params": {}
 }
 ```
@@ -84,6 +85,7 @@ POST   /api/mindmap/generate  生成思维导图
 
 ```
 POST   /api/bench/run   运行引擎对比
+POST   /api/bench/run-batch   批量运行引擎对比
 ```
 
 请求示例：
@@ -93,13 +95,41 @@ POST   /api/bench/run   运行引擎对比
   "file_ids": ["xxx"],
   "engine_a": "direct",
   "params_a": {},
-  "engine_b": "mapreduce",
+  "engine_b": "outline",
   "params_b": {},
   "judge_model": "gpt-4o"
 }
 ```
 
 返回每个文件的 5 维度评分（coverage / hierarchy / balance / conciseness / accuracy，各 1-5 分）。
+
+CLI 批量评测：
+
+```bash
+cd backend
+uv run python scripts/bench_cli.py \
+  --engine-a direct \
+  --engine-b docmerge \
+  --all-files \
+  --group-size 2 \
+  --sample-count 10 \
+  --seed 42 \
+  --output bench_results.json
+```
+
+- `--group-size/-k` 控制每次随机抽几篇文档，默认 `2`
+- 当选中文档数大于 `1` 时，不传 `--sample-count` 会跑全部唯一组合；传了则随机抽取不重复任务
+- 当数据集只有 `1` 篇时，CLI 会直接跑单任务评测
+
+生成 HTML 报告：
+
+```bash
+cd backend
+uv run python scripts/render_bench_report.py bench_results.json
+```
+
+- 默认输出和输入同目录、同名 `.html`
+- 报告会复用 Open-NotebookLM 笔记页里的 Markdown 渲染规则来展示 judge rationale
 
 ### 设置
 
@@ -128,7 +158,7 @@ curl http://localhost:8000/api/files/
 ```bash
 curl -X POST http://localhost:8000/api/mindmap/generate \
   -H "Content-Type: application/json" \
-  -d '{"file_ids": ["FILE_ID"], "engine": "direct", "params": {}}'
+  -d '{"file_ids": ["FILE_ID"], "engine": "outline", "params": {}}'
 ```
 
 运行 Bench 对比：
@@ -140,7 +170,7 @@ curl -X POST http://localhost:8000/api/bench/run \
     "file_ids": ["FILE_ID"],
     "engine_a": "direct",
     "params_a": {},
-    "engine_b": "mapreduce",
+    "engine_b": "outline",
     "params_b": {},
     "judge_model": "gpt-4o"
   }'
